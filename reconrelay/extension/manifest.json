@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "ReconRelay",
+  "short_name": "ReconRelay",
+  "version": "1.0.0",
+  "description": "Harvests the attack surface of a page you are authorized to test and relays it to your own ReconRelay server for recursive recon.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "webRequest",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/harvest.js", "src/content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "ReconRelay",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "devtools_page": "src/devtools.html",
+  "options_page": "src/options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

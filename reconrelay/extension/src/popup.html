@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ReconRelay</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>ReconRelay</h1>
+      <span id="status" class="pill pill-off">offline</span>
+    </header>
+
+    <section id="target">
+      <div class="label">Current page</div>
+      <div id="page-url" class="mono">—</div>
+    </section>
+
+    <section id="controls">
+      <label>
+        Preset
+        <select id="preset">
+          <option value="passive">passive — no requests to the target</option>
+          <option value="recon">recon — DNS + HTTP fingerprint</option>
+          <option value="active">active — add port scanning</option>
+        </select>
+      </label>
+      <label>
+        Depth
+        <input id="depth" type="number" min="1" max="6" value="3" />
+      </label>
+      <button id="scan" class="primary">Scan this page</button>
+      <button id="preview">Preview payload</button>
+    </section>
+
+    <section id="counts" hidden>
+      <div class="label">Harvested</div>
+      <ul id="count-list"></ul>
+    </section>
+
+    <section id="feed">
+      <div class="label">
+        Live events
+        <span id="event-count" class="pill">0</span>
+      </div>
+      <ol id="event-list"></ol>
+      <p id="empty" class="hint">No scan running.</p>
+    </section>
+
+    <footer>
+      <a href="#" id="open-options">Settings</a>
+      <span class="hint">Only scan what you are authorized to test.</span>
+    </footer>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

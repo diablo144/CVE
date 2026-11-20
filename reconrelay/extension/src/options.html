@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ReconRelay settings</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0; padding: 32px;
+        background: #0d1117; color: #e6edf3;
+        font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        max-width: 680px;
+      }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      .sub { color: #8b949e; margin: 0 0 24px; }
+      fieldset { border: 1px solid #30363d; border-radius: 8px; margin: 0 0 18px; padding: 16px; }
+      legend { padding: 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; }
+      label { display: block; margin: 0 0 14px; font-size: 13px; }
+      label span { display: block; color: #8b949e; font-size: 12px; margin-top: 3px; }
+      input[type="text"], input[type="url"], input[type="password"], select, input[type="number"] {
+        width: 100%; max-width: 420px; margin-top: 4px;
+        background: #161b22; color: #e6edf3; border: 1px solid #30363d;
+        border-radius: 6px; padding: 7px 9px; font: 13px ui-monospace, Menlo, monospace;
+      }
+      .check { display: flex; gap: 8px; align-items: flex-start; }
+      .check input { margin-top: 3px; }
+      .check div { flex: 1; }
+      button {
+        background: #1f6feb; color: #fff; border: 0; border-radius: 6px;
+        padding: 8px 16px; font: 600 13px inherit; cursor: pointer;
+      }
+      button.secondary { background: #21262d; border: 1px solid #30363d; }
+      .row { display: flex; gap: 10px; align-items: center; }
+      .warn { border-color: #d29922; }
+      .warn legend { color: #d29922; }
+      #result { margin-top: 14px; font-size: 13px; }
+      #result.ok { color: #3fb950; }
+      #result.bad { color: #f85149; }
+      code { background: #161b22; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>ReconRelay</h1>
+    <p class="sub">
+      Point the extension at your own gateway. The server, not the extension, decides what may be
+      scanned — anything outside its allowlist is refused with HTTP 403.
+    </p>
+
+    <fieldset>
+      <legend>Gateway</legend>
+      <label>
+        Server URL
+        <input type="url" id="serverUrl" placeholder="https://recon.example.com" />
+        <span>Must be HTTPS in production. The JWT rides in a WebSocket query string, so plain HTTP would leak it.</span>
+      </label>
+      <label>
+        API key
+        <input type="password" id="apiKey" placeholder="from RR_API_KEYS on the server" />
+        <span>Stored in <code>chrome.storage.local</code> and exchanged for a short-lived JWT.</span>
+      </label>
+      <label>
+        Operator name
+        <input type="text" id="operator" placeholder="operator" />
+        <span>Recorded against every job in the scan history.</span>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Scan defaults</legend>
+      <label>
+        Preset
+        <select id="preset">
+          <option value="passive">passive — certificate transparency + DNS only</option>
+          <option value="recon">recon — adds HTTP fetch and fingerprinting</option>
+          <option value="active">active — adds port scanning (needs server permission)</option>
+        </select>
+      </label>
+      <label>
+        Maximum depth
+        <input type="number" id="maxDepth" min="1" max="6" />
+        <span>Hops from the seed. The server caps this again at <code>RR_MAX_DEPTH</code>.</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="autoSubmit" />
+        <div>
+          Automatically submit pages you visit
+          <span>Off by default. When enabled, each URL is submitted at most once per tab every 30 minutes. Turning it on can send pages you did not mean to test.</span>
+        </div>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="activeModules" />
+        <div>
+          Request active modules
+          <span>Ignored unless the server sets <code>RR_ALLOW_ACTIVE_MODULES=true</code>.</span>
+        </div>
+      </label>
+    </fieldset>
+
+    <div class="row">
+      <button id="save">Save</button>
+      <button id="test" class="secondary">Test connection</button>
+    </div>
+    <p id="result"></p>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
