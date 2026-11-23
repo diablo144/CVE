@@ -223,6 +223,6 @@ props = doc.core_properties
 props.title = title
 props.subject = "IEEE-style conference paper draft: architecture and prototype evaluation"
 props.author = "[Your Name]"
-props.keywords = "reconnaissance, browser extension, BBOT, authorization, attack surface"
+props.keywords = "reconnaissance, browser extension, authorization, attack surface"
 doc.save(OUTPUT)
 print(OUTPUT)
