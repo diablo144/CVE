@@ -180,7 +180,21 @@ for line in content:
         continue
     if line.startswith("**Author:**") or line.startswith("**Affiliation:**") or line.startswith("**Date:**"):
         continue
-    if line.startswith("## "):
+    image_match = re.fullmatch(r"!\[(.*?)\]\((.*?)\)", line)
+    if image_match:
+        caption, image_name = image_match.groups()
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after = Pt(1)
+        p.paragraph_format.keep_with_next = True
+        p.add_run().add_picture(str(ROOT / image_name), width=Inches(3.02))
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(4)
+        p.paragraph_format.line_spacing = 1.0
+        add_inline(p, caption, size=8.5)
+    elif line.startswith("## "):
         heading = line[3:]
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
