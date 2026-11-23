@@ -40,6 +40,10 @@ BBOT is a public modular reconnaissance scanner that passes structured events be
 
 ## 4. Proposed System and Methodology
 
+Fig. 1 summarizes the route from the inspected page to the live event view. The extension has no separate sign-in screen; it handles the short-lived token in the background, while the gateway continues to validate requests and enforce scope.
+
+![Fig. 1. ReconRelay data flow from browser harvest through server-side scope checks and recursive processing to live browser results.](architecture_flow.png)
+
 ### 4.1 Browser Extension
 
 The extension uses Chrome’s Manifest V3 structure: a service worker, a content script, a popup, an options page, and a DevTools page [3]. The content script reads the current document and collects links, hidden links, forms and field names, script references, inline script hints, and resource entries. It also looks for email-like strings, cloud-storage patterns, and common secret formats. Script files are fetched by the service worker rather than the content script, and only same-site scripts are analyzed, with limits on file count and size.
