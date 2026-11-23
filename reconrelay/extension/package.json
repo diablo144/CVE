@@ -1,0 +1,9 @@
+{
+  "name": "reconrelay-extension-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Node test scripts for the ReconRelay unpacked MV3 extension",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
