@@ -49,7 +49,7 @@ def arrow_down(y1, y2, label=None):
 
 # A restrained IEEE-style figure: white background, black outlines, gray headers.
 centered("RECONRELAY DATA FLOW", 36, FONT_BOLD)
-centered("Background token handling; no separate sign-in screen in the extension", 72, FONT_SMALL, DARK)
+centered("Browser observations flow to the server; scan events return to the browser", 72, FONT_SMALL, DARK)
 
 _, _, bottom1 = box(110, 145, "1. BROWSER EXTENSION", [
     "Current page → DOM / script / response-metadata harvest",
@@ -58,8 +58,8 @@ _, _, bottom1 = box(110, 145, "1. BROWSER EXTENSION", [
 arrow_down(bottom1, 300, "HTTPS REST · JSON seed")
 
 left2, right2, bottom2 = box(300, 150, "2. FASTAPI GATEWAY", [
-    "Validates server token and checks authorized scope",
-    "Invalid or out-of-scope jobs are rejected",
+    "Receives seed and applies configured target filters",
+    "Jobs outside the configured list are rejected",
 ], width=700)
 
 # Rejection path to the right of the gateway.
@@ -68,7 +68,7 @@ draw.line((right2, 372, reject_left, 372), fill=BLACK, width=2)
 draw.polygon(((reject_left + 10, 366), (reject_left + 10, 378), (reject_left, 372)), fill=BLACK)
 draw.rounded_rectangle((reject_left, reject_top, reject_left + reject_w, reject_top + reject_h), radius=7, fill=WHITE, outline=BLACK, width=2)
 draw.text((reject_left + reject_w // 2, reject_top + 23), "REJECT", font=FONT_SMALL_BOLD, fill=BLACK, anchor="mm")
-draw.text((reject_left + reject_w // 2, reject_top + 51), "HTTP 403", font=FONT_SMALL, fill=BLACK, anchor="mm")
+draw.text((reject_left + reject_w // 2, reject_top + 51), "outside target list", font=FONT_SMALL, fill=BLACK, anchor="mm")
 
 arrow_down(bottom2, 510)
 _, _, bottom3 = box(510, 115, "3. REDIS JOB QUEUE", [
@@ -92,7 +92,7 @@ _, _, bottom6 = box(1130, 145, "6. BROWSER RESULTS", [
 
 # Small figure footer clarifies the trust boundary without adding an auth UI.
 draw.line((125, 1320, W - 125, 1320), fill=BLACK, width=1)
-centered("The gateway remains responsible for authentication and scope enforcement.", 1352, FONT_SMALL, DARK)
+centered("The gateway filters targets and applies scan limits.", 1352, FONT_SMALL, DARK)
 
 img.save(OUT, optimize=True)
 print(OUT)

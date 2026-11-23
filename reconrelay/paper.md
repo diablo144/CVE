@@ -1,4 +1,4 @@
-# ReconRelay: A Browser-Extension Client for an Authorization-First Reconnaissance Service
+# ReconRelay: A Browser-Extension Reconnaissance Service
 
 **Author:** [Your Name]
 
@@ -8,31 +8,31 @@
 
 ## Abstract
 
-ReconRelay is a small reconnaissance prototype I built to connect information visible in a browser to a server-side discovery workflow. Its extension collects selected page details, including links, script paths, forms, and response headers, then sends them to a FastAPI service. A Python worker checks the submitted seeds against a server-side scope list, follows approved events within configured limits, and stores job and event data in Redis. The extension shows updates in a popup and a simple graph panel. I kept active TCP checks disabled by default and made the server require a separate setting before they can run. The current tests pass, but they use simulated network responses; they do not prove that the tool finds assets accurately or is ready for public deployment. This paper explains why I built the prototype, how its main parts work, what I tested, and what still needs to be done.
+ReconRelay is a small reconnaissance prototype I built to connect information visible in a browser to a server-side discovery workflow. Its extension collects selected page details, including links, script paths, forms, and response headers, then sends them to a FastAPI service. A Python worker filters seeds using the server’s configured target list, follows accepted events within depth and event limits, and stores job data in Redis. The extension shows updates in a popup and a simple graph panel. Active TCP checks are off by default and require a separate server setting. The current tests pass, but they use simulated network responses; they do not prove that the tool finds assets accurately or is ready for public deployment. This paper explains why I built the prototype, how its main parts work, what I tested, and what still needs to be done.
 
-**Keywords:** attack-surface mapping, browser extension, reconnaissance, scope control, WebSocket telemetry
+**Keywords:** attack-surface mapping, browser extension, reconnaissance, event processing, WebSocket telemetry
 
 ## 1. Introduction
 
 When I inspect a web application, I often find useful clues in the page itself: links, API paths, script files, form actions, hostnames, and technology hints. Collecting these clues by hand is manageable for a small site, but it becomes harder to keep track of them as the list grows. I wanted to try a workflow where the browser gathers the first set of clues and a server follows them up, while showing the results as they arrive.
 
-That idea became ReconRelay. The extension works on the page I am viewing. It sends a seed payload to a FastAPI gateway, where a worker expands the approved targets and returns events to the extension. I chose this split so the browser could provide page context without being responsible for deciding what the server is allowed to scan. The server applies the scope policy and resource limits independently of the extension.
+That idea became ReconRelay. The extension works on the page I am viewing. It sends a seed payload to a FastAPI gateway, where a worker processes the targets accepted by the server and returns events to the extension. I chose this split so the browser could provide page context while the server handled the recursive work and scan limits.
 
 The architecture began as a six-part design: browser client, gateway, queue, execution engine, persistence, and controlled egress [1]. The prototype implements the browser, gateway, queue, engine, and a Redis event store. I have not implemented a VPN or proxy layer. I also left out dedicated graph and relational databases so I could focus on getting the basic job-and-telemetry path working.
 
-## 2. Problem Definition, Objectives, and Safety Requirements
+## 2. Problem Definition and Project Requirements
 
 The problem I set out to address was straightforward: a browser can reveal useful application details, but those details need to be turned into an organized, bounded scan before they are useful as an attack-surface view. I wanted one path from page inspection to a job that can be monitored, without letting the extension decide what the server may probe.
 
-I had three practical goals. First, harvesting should be convenient but should not send data from every page automatically. Second, every target and discovered seed should be checked against an operator-defined scope. Third, the recursive work should stop at clear depth, event-count, and time limits. These requirements shaped the extension defaults and the server policy.
+I had three practical goals. First, harvesting should be convenient but should not send data from every page automatically. Second, the server should process only targets listed in its configuration. Third, recursive work should stop at clear depth, event-count, and time limits. These requirements shaped the extension defaults and the service policy.
 
-The server uses an explicit list of authorized domains or address ranges. If that list is empty, jobs are refused. This is important because a client-side check would not be enough: a user could change the extension or send a request directly to the API. Active TCP probes are also disabled by default. A job must request them, and the server must separately allow them.
+The service uses a configured list of domains or address ranges and filters submitted seeds against it. This check happens on the server, not only in the extension. Active TCP probes are also disabled by default and require a separate server setting.
 
 The extension tries to reduce the amount of sensitive data it sends. It removes cookie values, redacts common secret-like strings, and replaces sensitive query parameter values. These checks are best-effort, not a guarantee. A new credential format or an unusual field could still pass through, so the output should be handled as sensitive. Automatic submission is off by default, and the operator can preview a payload before scanning.
 
 ## 3. Existing Systems and Project Gap
 
-Security assessment workflows commonly combine scanners, data sources, and result viewers. That flexibility is useful, but an operator may have to move results between tools or manually turn browser observations into scan inputs. I wanted to see whether a small extension could make that hand-off more direct without moving authorization decisions into the browser.
+Security assessment workflows commonly combine scanners, data sources, and result viewers. That flexibility is useful, but an operator may have to move results between tools or manually turn browser observations into scan inputs. I wanted to see whether a small extension could make that hand-off more direct while leaving recursive processing on the server.
 
 ### Related Work
 
@@ -40,9 +40,9 @@ BBOT is a public modular reconnaissance scanner that passes structured events be
 
 ## 4. Proposed System and Methodology
 
-Fig. 1 summarizes the route from the inspected page to the live event view. The extension has no separate sign-in screen; it handles the short-lived token in the background, while the gateway continues to validate requests and enforce scope.
+Fig. 1 summarizes the route from the inspected page to the live event view.
 
-![Fig. 1. ReconRelay data flow from browser harvest through server-side scope checks and recursive processing to live browser results.](architecture_flow.png)
+![Fig. 1. ReconRelay data flow from browser harvest through server-side target filtering and recursive processing to live browser results.](architecture_flow.png)
 
 ### 4.1 Browser Extension
 
@@ -52,11 +52,9 @@ A `webRequest` listener records selected response headers and URLs that look lik
 
 The default is manual submission. There is an optional auto-submit setting, but it is off unless the operator enables it. The interceptor keeps a bounded per-tab metadata buffer in session storage, which is removed when the tab closes or a scan consumes it. This keeps the extension’s local footprint limited compared with saving every harvested page to persistent storage.
 
-### 4.2 Gateway, Authentication, and Telemetry
+### 4.2 Gateway and Telemetry
 
-The FastAPI service handles token issuance, job submission and lookup, event history, cancellation, health checks, and WebSocket telemetry. The extension exchanges its configured API key for a short-lived JWT and uses that token on API requests. The WebSocket API cannot set the same authorization header as a normal HTTP request, so the short-lived token is passed in the connection URL. The Nginx example turns off access logging for that WebSocket route to reduce the chance of recording the token.
-
-The prototype does not use mutual TLS. A deployment should use HTTPS, a strong JWT secret, a separate API key, and a narrow scope list. In the supplied Compose setup, the API is bound to loopback and Nginx is the public entry point; Redis is not exposed publicly.
+The FastAPI service handles job submission and lookup, event history, cancellation, health checks, and WebSocket telemetry. Before a job is queued, the server applies its configured target list and scan limits. The supplied Nginx example disables access logging for the WebSocket route. In the Compose setup, the API is bound to loopback and Nginx is the public entry point; Redis is not exposed publicly.
 
 ### 4.3 Queue, Event Engine, and Persistence
 
@@ -70,7 +68,7 @@ The original design included Neo4j and PostgreSQL, but I did not build those par
 
 The server is written for Python 3.11 or later and uses FastAPI, Redis, and an ASGI server. The Dockerfile is based on Python’s slim image and is intended to build for ARM64 or AMD64 Linux. Compose runs the API, a worker, and Redis. The Nginx configuration is provided separately as the public TLS reverse proxy. I have not built or run these containers in this environment because Docker was unavailable.
 
-The client is an unpacked Manifest V3 extension for a compatible Chromium browser. Node.js is used to run its tests, but it is not part of the extension at runtime. To deploy the service, an operator must supply an HTTPS hostname, a strong JWT secret, an API key, and the authorized scope list. Redis and the API should remain behind the proxy and must not be exposed directly to the internet.
+The client is an unpacked Manifest V3 extension for a compatible Chromium browser. Node.js is used to run its tests, but it is not part of the extension at runtime. To deploy the service, an operator must supply an HTTPS hostname and the server’s target list. Redis and the API should remain behind the proxy and must not be exposed directly to the internet.
 
 The Compose file uses one worker and modest memory limits as a starting point. I have not measured the system on an Oracle VM, so I cannot claim a particular free-tier capacity or scan rate. A deployment test on the actual host is still needed to check memory use, restart behavior, TLS, and WebSocket proxying.
 
@@ -78,13 +76,13 @@ The Compose file uses one worker and modest memory limits as a starting point. I
 
 I tested the code with automated tests and fake network responses, not with live targets. The server suite contains 65 tests covering policy, the event engine, API routes, and worker behavior. The extension suite contains 21 Node tests for extraction, URL handling, redaction, header filtering, and graph layout. The project also passed JavaScript syntax checks, manifest and asset checks, a Compose YAML parse, and validation that the generated DOCX has a two-column body.
 
-The tests check important failure cases as well as normal behavior. For example, they verify that an empty allowlist does not authorize a scan, that derived events only follow an accepted parent, and that a module cannot exceed the event ceiling by returning a large batch. The extension tests check that cookie values and selected secret patterns are redacted. They do not show how often the extractor finds real assets or how often it reports irrelevant ones. The test setup and code are in the project repository [7].
+The tests check important failure cases as well as normal behavior. For example, they verify that an empty target list yields no accepted scan seeds, that derived events only follow an accepted parent, and that a module cannot exceed the event ceiling by returning a large batch. The extension tests check that cookie values and selected secret patterns are redacted. They do not show how often the extractor finds real assets or how often it reports irrelevant ones. The test setup and code are in the project repository [7].
 
 This evaluation is limited. I have not measured discovery precision, false positives, request volume, scan duration, or performance on an Oracle free-tier VM. I have not loaded the extension into a real Chrome profile, and the container deployment has not been run. No external system was scanned. The test results therefore show that the implemented paths behave as expected with controlled fixtures; they do not establish production readiness.
 
 ## 7. Discussion, Limitations, and Future Work
 
-The main benefit of this design is that the extension can gather information from the page while the server keeps control of authorization and scan limits. The same separation also creates risks. An API key stored in a browser profile could be exposed if that profile is compromised. The server currently authenticates job-read requests but does not isolate them by operator, so I would treat this as a single-operator prototype rather than a shared service.
+The main benefit of this design is that the extension can gather information from the page while the server handles target filtering and scan limits. The same separation also creates risks. The current prototype does not separate job data between different operators, so I would use it as a single-operator service rather than share it with a group.
 
 The module set is intentionally small. There is no vulnerability-template scanner, large-scale port scanner, external Shodan or Whois integration, distributed retry queue, or multi-tenant access control. The interceptor also sees only selected browser metadata; it is not a full network capture tool. Secret redaction is incomplete by nature, and users should not assume that all credentials are removed.
 
@@ -92,7 +90,7 @@ The next useful step is a lab evaluation with pages and domains that I control. 
 
 ## 8. Conclusion
 
-I built ReconRelay to try a simple workflow: collect a page’s visible reconnaissance clues in the browser, submit them to a server that enforces scope, and watch the resulting events arrive. The prototype includes the extension, FastAPI gateway, Redis queue and event history, a small recursive worker, and a graph view. The server and extension tests pass, but they use controlled fixtures.
+I built ReconRelay to try a simple workflow: collect a page’s visible reconnaissance clues in the browser, send them to a server for bounded processing, and watch the resulting events arrive. The prototype includes the extension, FastAPI gateway, Redis queue and event history, a small recursive worker, and a graph view. The server and extension tests pass, but they use controlled fixtures.
 
 The project is not finished as a deployable assessment service. The extension has not been tested in a real browser here, Docker has not been run, and the system has not been evaluated against live targets or on Oracle hardware. The next step is to test it in a controlled lab and record actual discovery, resource, and deployment results. Until then, ReconRelay should be treated as a prototype for authorized testing, not a production scanner.
 
