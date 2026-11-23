@@ -63,12 +63,13 @@ left2, right2, bottom2 = box(300, 150, "2. FASTAPI GATEWAY", [
 ], width=700)
 
 # Rejection path to the right of the gateway.
-reject_left, reject_top, reject_w, reject_h = 920, 335, 150, 76
+reject_left, reject_top, reject_w, reject_h = 920, 327, 150, 92
 draw.line((right2, 372, reject_left, 372), fill=BLACK, width=2)
 draw.polygon(((reject_left + 10, 366), (reject_left + 10, 378), (reject_left, 372)), fill=BLACK)
 draw.rounded_rectangle((reject_left, reject_top, reject_left + reject_w, reject_top + reject_h), radius=7, fill=WHITE, outline=BLACK, width=2)
-draw.text((reject_left + reject_w // 2, reject_top + 23), "REJECT", font=FONT_SMALL_BOLD, fill=BLACK, anchor="mm")
-draw.text((reject_left + reject_w // 2, reject_top + 51), "outside target list", font=FONT_SMALL, fill=BLACK, anchor="mm")
+draw.text((reject_left + reject_w // 2, reject_top + 22), "REJECT", font=FONT_SMALL_BOLD, fill=BLACK, anchor="mm")
+draw.text((reject_left + reject_w // 2, reject_top + 51), "outside target", font=FONT_SMALL, fill=BLACK, anchor="mm")
+draw.text((reject_left + reject_w // 2, reject_top + 73), "list", font=FONT_SMALL, fill=BLACK, anchor="mm")
 
 arrow_down(bottom2, 510)
 _, _, bottom3 = box(510, 115, "3. REDIS JOB QUEUE", [
