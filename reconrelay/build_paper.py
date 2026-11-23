@@ -1,229 +1,242 @@
-"""Build the editable, college-style ReconRelay project report DOCX."""
+"""Build the IEEE-style, editable ReconRelay DOCX from paper.md."""
 from pathlib import Path
 import re
 
 from docx import Document
+from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 ROOT = Path(__file__).parent
-SOURCE = ROOT / "project_report.md"
-OUTPUT = ROOT / "ReconRelay_Project_Report.docx"
+SOURCE = ROOT / "paper.md"
+OUTPUT = ROOT / "IEEE_ReconRelay_Paper.docx"
 
 
-def set_font(run, size=12, bold=False, italic=False):
+def set_font(run, *, size=10, bold=False, italic=False, small_caps=False):
     run.font.name = "Times New Roman"
     run._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Times New Roman")
     run.font.size = Pt(size)
     run.bold = bold
     run.italic = italic
-
-
-def add_inline(paragraph, text, size=12):
-    token_re = re.compile(r"(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)")
-    pos = 0
-    for match in token_re.finditer(text):
-        if match.start() > pos:
-            set_font(paragraph.add_run(text[pos:match.start()]), size)
-        token = match.group(0)
-        if token.startswith("**"):
-            set_font(paragraph.add_run(token[2:-2]), size, bold=True)
-        elif token.startswith("*"):
-            set_font(paragraph.add_run(token[1:-1]), size, italic=True)
-        else:
-            set_font(paragraph.add_run(token[1:-1]), size - 0.5)
-        pos = match.end()
-    if pos < len(text):
-        set_font(paragraph.add_run(text[pos:]), size)
+    run.font.small_caps = small_caps
 
 
 def add_page_number(paragraph):
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = paragraph.add_run()
-    begin = OxmlElement("w:fldChar"); begin.set(qn("w:fldCharType"), "begin")
-    instruction = OxmlElement("w:instrText"); instruction.set(qn("xml:space"), "preserve"); instruction.text = " PAGE "
-    separate = OxmlElement("w:fldChar"); separate.set(qn("w:fldCharType"), "separate")
-    displayed = OxmlElement("w:t"); displayed.text = "1"
-    end = OxmlElement("w:fldChar"); end.set(qn("w:fldCharType"), "end")
-    run._r.extend([begin, instruction, separate, displayed, end])
-    set_font(run, 10)
-
-
-def add_toc(paragraph):
-    run = paragraph.add_run()
-    begin = OxmlElement("w:fldChar"); begin.set(qn("w:fldCharType"), "begin")
-    instruction = OxmlElement("w:instrText"); instruction.set(qn("xml:space"), "preserve")
-    instruction.text = ' TOC \\o "1-3" \\h \\z \\u '
-    separate = OxmlElement("w:fldChar"); separate.set(qn("w:fldCharType"), "separate")
-    text = OxmlElement("w:t"); text.text = "Open in Word or LibreOffice and update the table to populate page numbers."
-    end = OxmlElement("w:fldChar"); end.set(qn("w:fldCharType"), "end")
+    begin = OxmlElement("w:fldChar")
+    begin.set(qn("w:fldCharType"), "begin")
+    instruction = OxmlElement("w:instrText")
+    instruction.set(qn("xml:space"), "preserve")
+    instruction.text = " PAGE "
+    separate = OxmlElement("w:fldChar")
+    separate.set(qn("w:fldCharType"), "separate")
+    text = OxmlElement("w:t")
+    text.text = "1"
+    end = OxmlElement("w:fldChar")
+    end.set(qn("w:fldCharType"), "end")
     run._r.extend([begin, instruction, separate, text, end])
-    set_font(run, 11)
+    set_font(run, size=8)
 
 
-def add_table(doc, rows):
-    parsed = [[cell.strip() for cell in row.strip().strip("|").split("|")] for row in rows]
-    parsed = [row for row in parsed if not all(re.fullmatch(r":?-{3,}:?", cell.replace(" ", "")) for cell in row)]
-    if not parsed:
-        return
-    cols = max(map(len, parsed))
-    table = doc.add_table(rows=len(parsed), cols=cols)
-    table.style = "Table Grid"
-    for i, row in enumerate(parsed):
-        for j in range(cols):
-            cell = table.cell(i, j)
-            cell.text = ""
-            p = cell.paragraphs[0]
-            p.paragraph_format.space_after = Pt(0)
-            if j < len(row):
-                add_inline(p, row[j], 10)
-            for run in p.runs:
-                if i == 0:
-                    run.bold = True
-    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+def add_inline(paragraph, text, *, size=10):
+    token_re = re.compile(r"(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)")
+    pos = 0
+    for match in token_re.finditer(text):
+        if match.start() > pos:
+            run = paragraph.add_run(text[pos:match.start()])
+            set_font(run, size=size)
+        token = match.group(0)
+        if token.startswith("**"):
+            run = paragraph.add_run(token[2:-2])
+            set_font(run, size=size, bold=True)
+        elif token.startswith("*"):
+            run = paragraph.add_run(token[1:-1])
+            set_font(run, size=size, italic=True)
+        else:
+            run = paragraph.add_run(token[1:-1])
+            set_font(run, size=size - 0.5)
+        pos = match.end()
+    if pos < len(text):
+        run = paragraph.add_run(text[pos:])
+        set_font(run, size=size)
 
 
-def configure_paragraph(p, *, indent=True):
+def set_columns(section, count=2, gap_twips=360):
+    sect_pr = section._sectPr
+    cols = sect_pr.xpath("./w:cols")
+    if cols:
+        cols = cols[0]
+    else:
+        cols = OxmlElement("w:cols")
+        sect_pr.append(cols)
+    cols.set(qn("w:num"), str(count))
+    cols.set(qn("w:space"), str(gap_twips))
+    cols.set(qn("w:equalWidth"), "1")
+
+
+def format_body(p):
     p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    p.paragraph_format.line_spacing = 1.5
-    p.paragraph_format.space_after = Pt(6)
+    p.paragraph_format.first_line_indent = Inches(0.14)
+    p.paragraph_format.line_spacing = 1.0
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(2)
     p.paragraph_format.widow_control = True
-    if indent:
-        p.paragraph_format.first_line_indent = Inches(0.3)
 
 
 doc = Document()
-section = doc.sections[0]
-section.top_margin = Inches(0.85)
-section.bottom_margin = Inches(0.8)
-section.left_margin = Inches(1.15)
-section.right_margin = Inches(0.85)
-section.header_distance = Inches(0.35)
-section.footer_distance = Inches(0.35)
+first = doc.sections[0]
+first.top_margin = Inches(0.68)
+first.bottom_margin = Inches(0.68)
+first.left_margin = Inches(0.72)
+first.right_margin = Inches(0.72)
+first.header_distance = Inches(0.3)
+first.footer_distance = Inches(0.3)
 
 normal = doc.styles["Normal"]
 normal.font.name = "Times New Roman"
 normal._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-normal.font.size = Pt(12)
-normal.paragraph_format.line_spacing = 1.5
-normal.paragraph_format.space_after = Pt(6)
-for style_name in ("Heading 1", "Heading 2", "Heading 3"):
-    style = doc.styles[style_name]
-    style.font.name = "Times New Roman"
-    style._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-    style.font.color.rgb = __import__("docx").shared.RGBColor(0, 0, 0)
+normal.font.size = Pt(10)
+normal.paragraph_format.line_spacing = 1.0
+normal.paragraph_format.space_after = Pt(2)
 
-header = section.header.paragraphs[0]
-header.alignment = WD_ALIGN_PARAGRAPH.CENTER
-set_font(header.add_run("RECONRELAY — PROJECT REPORT"), 9, bold=True)
-add_page_number(section.footer.paragraphs[0])
+header = first.header.paragraphs[0]
+header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+r = header.add_run("RECONRELAY")
+set_font(r, size=8, small_caps=True)
+add_page_number(first.footer.paragraphs[0])
 
-settings = doc.settings.element
-update_fields = OxmlElement("w:updateFields")
-update_fields.set(qn("w:val"), "true")
-settings.append(update_fields)
+lines = [line.strip() for line in SOURCE.read_text(encoding="utf-8").splitlines()]
+# Skip the first Markdown title; the conference title is typeset separately.
+title = next(line[2:] for line in lines if line.startswith("# "))
+content = lines[lines.index(next(line for line in lines if line.startswith("# "))) + 1:]
 
-lines = [line.rstrip() for line in SOURCE.read_text(encoding="utf-8").splitlines()]
-cover = True
-i = 0
-while i < len(lines):
-    raw = lines[i]
-    line = raw.strip()
-    if not line:
-        i += 1
-        continue
-    if line == "<!-- PAGEBREAK -->":
-        doc.add_page_break()
-        cover = False
-        i += 1
-        continue
-    if line == "[TOC]":
-        p = doc.add_paragraph()
-        add_toc(p)
-        i += 1
-        continue
-    if line.startswith("|"):
-        table_lines = []
-        while i < len(lines) and lines[i].strip().startswith("|"):
-            table_lines.append(lines[i].strip())
-            i += 1
-        add_table(doc, table_lines)
-        continue
-    image = re.fullmatch(r"!\[(.*?)\]\((.*?)\)", line)
-    if image:
-        caption, image_name = image.groups()
+p = doc.add_paragraph()
+p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+p.paragraph_format.space_before = Pt(2)
+p.paragraph_format.space_after = Pt(10)
+p.paragraph_format.keep_with_next = True
+r = p.add_run(title)
+set_font(r, size=22)
+
+for label in ("**Author:**", "**Affiliation:**", "**Date:**"):
+    line = next((line for line in content if line.startswith(label)), None)
+    if line:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(1)
         p.paragraph_format.keep_with_next = True
-        p.add_run().add_picture(str(ROOT / image_name), width=Inches(6.15))
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_after = Pt(8)
-        add_inline(p, caption, 10)
-        i += 1
+        add_inline(p, line.replace("  ", " "), size=10)
+
+# Abstract and index terms are in a full-width section, as in the IEEE
+# conference Word template. The main paper continues in two columns below.
+abstract_start = next(i for i, line in enumerate(content) if line == "## Abstract")
+abstract_para = next(i for i in range(abstract_start + 1, len(content)) if content[i])
+abstract_text = content[abstract_para]
+keywords_line = next(line for line in content if line.startswith("**Keywords:**"))
+
+p = doc.add_paragraph()
+p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+p.paragraph_format.space_before = Pt(4)
+p.paragraph_format.space_after = Pt(2)
+p.paragraph_format.keep_with_next = True
+r = p.add_run("Abstract—")
+set_font(r, size=9, bold=True, italic=True)
+r = p.add_run(abstract_text)
+set_font(r, size=9)
+p.paragraph_format.line_spacing = 1.0
+p.paragraph_format.space_after = Pt(4)
+
+p = doc.add_paragraph()
+p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+p.paragraph_format.space_after = Pt(7)
+p.paragraph_format.keep_with_next = True
+r = p.add_run("Index Terms—")
+set_font(r, size=9, bold=True, italic=True)
+keyword_text = keywords_line.split("**Keywords:**", 1)[1].strip()
+r = p.add_run(keyword_text)
+set_font(r, size=9, italic=True)
+
+# Continuous section break: following text flows in IEEE-style two columns.
+main = doc.add_section(WD_SECTION.CONTINUOUS)
+main.top_margin = Inches(0.68)
+main.bottom_margin = Inches(0.68)
+main.left_margin = Inches(0.72)
+main.right_margin = Inches(0.72)
+main.header_distance = Inches(0.3)
+main.footer_distance = Inches(0.3)
+set_columns(main, 2, 360)
+
+# The added section inherits header/footer definitions, but set these explicitly
+# so Word displays page numbering consistently after the section break.
+main.header.is_linked_to_previous = True
+main.footer.is_linked_to_previous = True
+
+skip = {"## Abstract", keywords_line}
+for line in content:
+    if not line or line in skip or line == abstract_text:
         continue
-    if line.startswith("# "):
+    if line.startswith("**Author:**") or line.startswith("**Affiliation:**") or line.startswith("**Date:**"):
+        continue
+    image_match = re.fullmatch(r"!\[(.*?)\]\((.*?)\)", line)
+    if image_match:
+        caption, image_name = image_match.groups()
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(35)
-        p.paragraph_format.space_after = Pt(34)
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after = Pt(1)
         p.paragraph_format.keep_with_next = True
-        set_font(p.add_run(line[2:].upper()), 20, bold=True)
-        i += 1
-        continue
-    if line.startswith("## "):
+        p.add_run().add_picture(str(ROOT / image_name), width=Inches(3.02))
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(4)
+        p.paragraph_format.line_spacing = 1.0
+        add_inline(p, caption, size=8.5)
+    elif line.startswith("## "):
         heading = line[3:]
-        if heading.upper().startswith(("CHAPTER ", "REFERENCES", "APPENDIX ")):
-            doc.add_page_break()
-        p = doc.add_paragraph(style="Heading 1")
+        p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.keep_with_next = True
-        p.paragraph_format.space_before = Pt(8)
-        p.paragraph_format.space_after = Pt(12)
-        set_font(p.add_run(heading.upper()), 14, bold=True)
-        i += 1
-        continue
-    if line.startswith("### "):
-        p = doc.add_paragraph(style="Heading 2")
+        p.paragraph_format.space_before = Pt(7)
+        p.paragraph_format.space_after = Pt(4)
+        p.paragraph_format.line_spacing = 1.0
+        r = p.add_run(heading.upper())
+        set_font(r, size=10, bold=True, small_caps=True)
+    elif line.startswith("### "):
+        p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.LEFT
         p.paragraph_format.keep_with_next = True
-        p.paragraph_format.space_before = Pt(8)
-        p.paragraph_format.space_after = Pt(4)
-        set_font(p.add_run(line[4:]), 12, bold=True)
-        i += 1
-        continue
-    if line.startswith("- "):
-        p = doc.add_paragraph(style="List Bullet")
-        p.paragraph_format.line_spacing = 1.25
-        p.paragraph_format.space_after = Pt(3)
-        add_inline(p, line[2:], 12)
-        i += 1
-        continue
-    if re.match(r"^\d+\. ", line):
-        p = doc.add_paragraph(style="List Number")
-        p.paragraph_format.line_spacing = 1.25
-        p.paragraph_format.space_after = Pt(3)
-        add_inline(p, re.sub(r"^\d+\. ", "", line), 12)
-        i += 1
-        continue
-
-    p = doc.add_paragraph()
-    if cover:
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_after = Pt(5)
-        p.paragraph_format.line_spacing = 1.25
-        add_inline(p, line, 12)
+        p.paragraph_format.space_before = Pt(5)
+        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.line_spacing = 1.0
+        r = p.add_run(line[4:])
+        set_font(r, size=10, bold=True, italic=True)
+    elif re.match(r"^\[\d+\]", line):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.left_indent = Inches(0.18)
+        p.paragraph_format.first_line_indent = Inches(-0.18)
+        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.line_spacing = 1.0
+        p.paragraph_format.widow_control = True
+        add_inline(p, line, size=8.5)
     else:
-        configure_paragraph(p, indent=not (line.startswith("[") or line.startswith("**")))
-        add_inline(p, line, 12)
-    i += 1
+        p = doc.add_paragraph()
+        format_body(p)
+        add_inline(p, line, size=10)
+
+# Make the references heading continuous with its first entry and keep headings
+# from being stranded at the bottom of a column.
+for p in doc.paragraphs:
+    if p.text.strip().upper() == "REFERENCES":
+        p.paragraph_format.keep_with_next = True
 
 props = doc.core_properties
-props.title = "ReconRelay: Project Report"
-props.subject = "Browser-extension reconnaissance service — project report template"
-props.author = "[Student names]"
-props.keywords = "browser extension, reconnaissance, project report"
+props.title = title
+props.subject = "IEEE-style conference paper draft: architecture and prototype evaluation"
+props.author = "[Your Name]"
+props.keywords = "reconnaissance, browser extension, authorization, attack surface"
 doc.save(OUTPUT)
 print(OUTPUT)
