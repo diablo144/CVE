@@ -1,3 +1,5 @@
+<!-- INSTITUTION LOGOS -->
+
 # ReconRelay: A Browser Extension for a Reconnaissance Service
 
 **PROJECT PHASE 1**
@@ -59,6 +61,24 @@ Submitted for the Autonomous End Semester Project Viva-Voce Examination held on 
 | INTERNAL EXAMINER | EXTERNAL EXAMINER |
 |---|---|
 | Signature: ____________________ | Signature: ____________________ |
+
+<!-- PAGEBREAK -->
+
+## TRL, SDG AND SIMILARITY COMPLIANCE CERTIFICATE
+
+**Project Title:** ReconRelay: A Browser Extension for a Reconnaissance Service
+
+**Course Code & Name:** 23SCP501 — Project Phase 1
+
+**Department and Semester:** CSE (Cyber Security) — V
+
+| Compliance item | To be completed / verified |
+|---|---|
+| Technology Readiness Level (TRL) | ____________________ |
+| Sustainable Development Goal (SDG) — goal and rationale | ____________________ |
+| Similarity percentage (institutional checker) | ____________________ |
+
+The TRL, SDG mapping, and similarity percentage must be confirmed by the project guide or department using the institution’s assessment and similarity-checking process. They are intentionally not estimated in this report.
 
 <!-- PAGEBREAK -->
 

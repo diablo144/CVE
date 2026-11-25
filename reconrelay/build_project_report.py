@@ -4,6 +4,7 @@ import re
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
 from docx.shared import Inches, Pt
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -132,6 +133,28 @@ while i < len(lines):
     raw = lines[i]
     line = raw.strip()
     if not line:
+        i += 1
+        continue
+    if line == "<!-- INSTITUTION LOGOS -->":
+        logos = doc.add_table(rows=1, cols=2)
+        logos.alignment = WD_TABLE_ALIGNMENT.CENTER
+        logos.autofit = False
+        for cell in logos.rows[0].cells:
+            cell.width = Inches(2.4)
+            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        left_p = logos.cell(0, 0).paragraphs[0]
+        right_p = logos.cell(0, 1).paragraphs[0]
+        left_p.alignment = right_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        left_p.add_run().add_picture(str(ROOT / "report_assets" / "anna_university_emblem.jpeg"), width=Inches(1.15))
+        right_p.add_run().add_picture(str(ROOT / "report_assets" / "mcet_logo.jpeg"), width=Inches(1.65))
+        borders = OxmlElement("w:tblBorders")
+        for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            node = OxmlElement(f"w:{edge}")
+            node.set(qn("w:val"), "nil")
+            borders.append(node)
+        logos._tbl.tblPr.append(borders)
+        spacer = doc.add_paragraph()
+        spacer.paragraph_format.space_after = Pt(6)
         i += 1
         continue
     if line == "<!-- PAGEBREAK -->":
