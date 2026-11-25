@@ -1,58 +1,64 @@
-# ReconRelay: A Browser-Extension Client for a Reconnaissance Service
+# ReconRelay: A Browser Extension for a Reconnaissance Service
+
+**PROJECT PHASE 1**
+
+**Course Code & Name:** 23SCP501 — Project Phase 1
+
+**Department and Semester:** CSE (Cyber Security) — V
+
+**Academic Year:** 2026–2027
 
 **Submitted by**
 
-[STUDENT NAME 1] — [REGISTER NUMBER]
+Sanjay S — 727623BSC021
 
-[STUDENT NAME 2] — [REGISTER NUMBER]
+Mithrar Muralidharan R — 727623BSC027
 
-[STUDENT NAME 3] — [REGISTER NUMBER]
+Sudhakar K — 727622BSC039
 
 **in partial fulfillment of the requirements for the degree of**
 
-**BACHELOR OF ENGINEERING IN [DEGREE / SPECIALIZATION]**
+**BACHELOR OF ENGINEERING IN CSE (CYBER SECURITY)**
 
-[DEPARTMENT NAME]
+DEPARTMENT OF CSE (CYBER SECURITY)
 
-[COLLEGE NAME]
+DR. MAHALINGAM COLLEGE OF ENGINEERING AND TECHNOLOGY, POLLACHI - 642 003
 
-[INSTITUTION / UNIVERSITY DETAILS]
+(AN AUTONOMOUS INSTITUTION AFFILIATED TO ANNA UNIVERSITY, CHENNAI - 600 025)
 
-[MONTH YEAR]
+NOVEMBER 2026
 
 <!-- PAGEBREAK -->
 
 ## BONAFIDE CERTIFICATE
 
-Certified that this project report titled **“ReconRelay: A Browser-Extension Client for a Reconnaissance Service”** is the bonafide work of:
+**DR. MAHALINGAM COLLEGE OF ENGINEERING AND TECHNOLOGY, POLLACHI - 642 003**
 
-[STUDENT NAME 1] — [REGISTER NUMBER]
+*(AN AUTONOMOUS INSTITUTION AFFILIATED TO ANNA UNIVERSITY, CHENNAI - 600 025)*
 
-[STUDENT NAME 2] — [REGISTER NUMBER]
+Certified that this project report titled **“ReconRelay: A Browser Extension for a Reconnaissance Service”** is the bonafide work of:
 
-[STUDENT NAME 3] — [REGISTER NUMBER]
+Sanjay S — 727623BSC021
 
-who carried out the project work under my supervision during the academic year [ACADEMIC YEAR].
+Mithrar Muralidharan R — 727623BSC027
 
+Sudhakar K — 727622BSC039
 
-
-______________________________                         ______________________________
-
-**PROJECT GUIDE**                                                    **HEAD OF THE DEPARTMENT**
-
-[NAME, QUALIFICATIONS]                                          [NAME, QUALIFICATIONS]
-
-[DESIGNATION]                                                       [DEPARTMENT]
+who carried out the project work under my supervision during the academic year **2026–2027**.
 
 
 
-Submitted for the [INSTITUTION / UNIVERSITY] project Viva-Voce Examination held on [DATE].
+| PROJECT GUIDE | HEAD OF THE DEPARTMENT |
+|---|---|
+| Mrs. Jotheeswari M, M.E., MBA | Dr. P. Vivekanandan, M.Tech., Ph.D. |
+| Assistant Professor (SS), Department of CSE (Cyber Security) | Professor and Head, Department of CSE (Cyber Security) |
+| Signature: ____________________ | Signature: ____________________ |
 
+Submitted for the Autonomous End Semester Project Viva-Voce Examination held on ____________________.
 
-
-______________________________                         ______________________________
-
-**INTERNAL EXAMINER**                                           **EXTERNAL EXAMINER**
+| INTERNAL EXAMINER | EXTERNAL EXAMINER |
+|---|---|
+| Signature: ____________________ | Signature: ____________________ |
 
 <!-- PAGEBREAK -->
 
@@ -62,15 +68,15 @@ We hereby declare that this project report is an account of work carried out by 
 
 | S. No. | Student name and register number | Signature |
 |---|---|---|
-| 1 | [STUDENT NAME 1] — [REGISTER NUMBER] | |
-| 2 | [STUDENT NAME 2] — [REGISTER NUMBER] | |
-| 3 | [STUDENT NAME 3] — [REGISTER NUMBER] | |
+| 1 | Sanjay S — 727623BSC021 | |
+| 2 | Mithrar Muralidharan R — 727623BSC027 | |
+| 3 | Sudhakar K — 727622BSC039 | |
 
 **Verified by**
 
-Project Guide: [NAME AND SIGNATURE]
+Project Guide: Mrs. Jotheeswari M — ____________________
 
-Head of the Department: [NAME AND SIGNATURE]
+Head of the Department: Dr. P. Vivekanandan — ____________________
 
 <!-- PAGEBREAK -->
 
@@ -84,7 +90,7 @@ ReconRelay is a prototype that connects information visible in a browser to a se
 
 ## ACKNOWLEDGEMENT
 
-We express our sincere gratitude to everyone who supported this project through guidance, facilities, and encouragement. We thank the management and leadership of [COLLEGE NAME] for providing the resources required to carry out the work. We are grateful to the Head of the Department, project coordinator, and faculty members of [DEPARTMENT NAME] for their advice and support. We especially thank our project guide, [GUIDE NAME], for guidance throughout the project. We also thank our classmates, friends, and families for their encouragement. This acknowledgement is an editable template; please replace the bracketed details and retain only acknowledgements that are accurate.
+We express our sincere gratitude to the management of Dr. Mahalingam College of Engineering and Technology for providing the facilities required to carry out this project. We thank our Principal, Dr. P. Govindasamy, M.E., Ph.D., for his encouragement. We are grateful to Dr. P. Vivekanandan, M.Tech., Ph.D., Professor and Head of the Department of CSE (Cyber Security), and our project coordinator, Mr. S. Saravana Kumar, M.E., Assistant Professor (SS), for their support. We extend our special thanks to our project guide, Mrs. Jotheeswari M, M.E., MBA, Assistant Professor (SS), for her guidance throughout Project Phase 1. Finally, we thank the faculty members, friends, and families who encouraged us during this work.
 
 <!-- PAGEBREAK -->
 
