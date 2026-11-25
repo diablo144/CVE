@@ -221,9 +221,9 @@ while i < len(lines):
     i += 1
 
 props = doc.core_properties
-props.title = "ReconRelay: Project Report"
-props.subject = "Browser-extension reconnaissance service — project report template"
-props.author = "[Student names]"
+props.title = "ReconRelay: A Browser Extension for a Reconnaissance Service — Project Phase 1"
+props.subject = "Project Phase 1 report: browser-extension reconnaissance service"
+props.author = "Sanjay S; Mithrar Muralidharan R; Sudhakar K"
 props.keywords = "browser extension, reconnaissance, project report"
 doc.save(OUTPUT)
 print(OUTPUT)
